@@ -24,7 +24,7 @@ struct Job {
     pid_t pid;
     int state; // 0 = bg, 1 = fg
     int status; // 0 = stopped, 1 = running
-    char line[MAX_LINE];
+    char cline[MAX_LINE];
 };
 
 struct Job jobList[MAX_JOBS];
@@ -32,13 +32,13 @@ int jobInd = 0;
 
 void addJob(pid_t p, int state) { // Run after every job (fork)
     if (jobInd < MAX_JOBS) {
-        jobList[jobInd].jobid = jobInd;
+        jobList[jobInd].jobid = jobInd + 1;
         jobList[jobInd].pid = p;
         jobList[jobInd].state = state;
         jobList[jobInd].status = 1;
 
         char *s = (state == 0) ? "background" : "foreground";
-        printf("job id: [%d] pid: (%d) job state: %s\n", jobList[jobInd].jobid + 1, jobList[jobInd].pid, s);
+        printf("job id: [%d] pid: (%d) job state: %s\n", jobList[jobInd].jobid, jobList[jobInd].pid, s);
         jobInd++;
     } else {
         perror("job list full");
@@ -47,7 +47,7 @@ void addJob(pid_t p, int state) { // Run after every job (fork)
 
 void copyLine(char *l) { //Run just after reading the line, will overwrite until an actual job is added - Alternatively create buffer in main and add this to addJob
     if (jobInd < MAX_JOBS) {
-        strcpy(jobList[jobInd].line, l);
+        strcpy(jobList[jobInd].cline, l);
     } else {
         perror("job list full");
     }
@@ -63,7 +63,7 @@ void jobs() {
         else
             strcpy(status, "Running");
 
-        printf("[%d] (%d) %s %s", jobList[i].jobid + 1, jobList[i].pid, status, jobList[i].line);
+        printf("[%d] (%d) %s %s", jobList[i].jobid, jobList[i].pid, status, jobList[i].cline);
     }
 }
 
