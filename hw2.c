@@ -6,6 +6,38 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include "h2.c"
+#include <signal.h>
+
+pid_t fg_pid = -1;
+
+void sigint_handler(int sig) {
+    if (fg_pid > 0) {
+        kill(fg_pid, SIGINT);
+    }
+}
+
+void execute_foreground_command(char **args) {
+        pid_t pid = fork();
+        if (pid == 0) {
+            if (strchr(args[0], '/') == NULL) {
+                char path_buf[256];
+                snprintf(path_buf, sizeof(path_buf), "./%s", args[0]);
+                execv(path_buf, args);
+            }
+    
+            execvp(args[0], args);
+    
+            perror("execvp/execv failed");
+            exit(1);
+        } else if (pid > 0) {
+            fg_pid = pid;
+            waitpid(pid, NULL, 0);
+            fg_pid = -1;
+        } else {
+            perror("fork failed");
+        }
+    }
+
 
 void print_prompt() {
     printf("prompt > ");
@@ -121,6 +153,8 @@ void redir_close() {
 }
 
 int main() {
+    signal(SIGINT, sigint_handler);
+
     char line[MAX_LINE];
     char *args[MAX_ARGC];
 
@@ -149,16 +183,13 @@ int main() {
         }
         args[argc] = NULL;
 
-        // 空命令
         if (args[0] == NULL)
             continue;
 
-        // quit 命令
         if (strcmp(args[0], "quit") == 0) {
             clear();
             break;
         }
-        // pwd 命令
         else if (strcmp(args[0], "pwd") == 0) {
             char cwd[1024];
             if (getcwd(cwd, sizeof(cwd)) != NULL) {
@@ -167,7 +198,6 @@ int main() {
                 perror("getcwd failed");
             }
         }
-        // cd 命令
         else if (strcmp(args[0], "cd") == 0) {
             if (args[1] == NULL) {
                 fprintf(stderr, "cd: missing argument\n");
@@ -214,7 +244,6 @@ int main() {
                 perror("fork failed");
             }
         }
-
         //Jobs
         else if (strcmp(args[0], "jobs") == 0) {
            jobs();
@@ -244,7 +273,7 @@ int main() {
 
         // 未知命令
         else {
-            printf("Unknown command: %s\n", args[0]);
+            execute_foreground_command(args);
         }
 
         def_state = 1;
