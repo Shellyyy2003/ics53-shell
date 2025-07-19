@@ -1,3 +1,9 @@
+/*
+ * Authors:
+ *   Thomas Nguyen – 29843831
+ *   Yiwen Wu – 42326616
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
