@@ -20,6 +20,8 @@ struct Job {
     char cline[MAX_LINE];
 };
 
+void remove_job(pid_t pid);
+
 int def_state = 1; // fg by default
 int redirect_out = 0;
 mode_t mode = S_IRWXU | S_IRWXG | S_IRWXO;
